@@ -2,7 +2,7 @@ import { validateAndParseAddress } from 'starknet';
 import { CheckpointWriter } from '@snapshot-labs/checkpoint';
 import { formatUnits } from '@ethersproject/units';
 import { TokenHolder, Delegate, Governance } from '../.checkpoint/models';
-import { BIGINT_ZERO, DECIMALS, getEntity } from './utils';
+import { BIGINT_ZERO, DECIMALS, ZERO_ADDRESS, getEntity } from './utils';
 
 export const handleDelegateChanged: CheckpointWriter = async ({ event }) => {
   if (!event) return;
@@ -55,5 +55,59 @@ export const handleTransfer: CheckpointWriter = async ({ event }) => {
 
   console.log('Handle transfer', event);
 
-  // @TODO handle transfer https://github.com/snapshot-labs/delegates-subgraph/blob/main/src/mapping.ts#L48-L84
+  let governanceUpdated = false;
+  const from = validateAndParseAddress(event.from);
+  const to = validateAndParseAddress(event.to);
+
+  const fromHolder: TokenHolder = await getEntity(TokenHolder, from);
+  const toHolder: TokenHolder = await getEntity(TokenHolder, to);
+  const governance: Governance = await getEntity(Governance, 'GOVERNANCE');
+
+  if (from != ZERO_ADDRESS) {
+    const fromHolderPreviousBalance = fromHolder.tokenBalanceRaw;
+    fromHolder.tokenBalanceRaw = (
+      BigInt(fromHolder.tokenBalanceRaw) - BigInt(event.value)
+    ).toString();
+    fromHolder.tokenBalance = formatUnits(fromHolder.tokenBalanceRaw, DECIMALS);
+
+    if (
+      BigInt(fromHolder.tokenBalanceRaw) == BIGINT_ZERO &&
+      BigInt(fromHolderPreviousBalance) > BIGINT_ZERO
+    ) {
+      governance.currentTokenHolders -= 1;
+      governanceUpdated = true;
+    } else if (
+      BigInt(fromHolder.tokenBalanceRaw) > BIGINT_ZERO &&
+      BigInt(fromHolderPreviousBalance) == BIGINT_ZERO
+    ) {
+      governance.currentTokenHolders += 1;
+      governanceUpdated = true;
+    }
+
+    await fromHolder.save();
+  }
+
+  const toHolderPreviousBalance = toHolder.tokenBalanceRaw;
+  toHolder.tokenBalanceRaw = toHolder.tokenBalanceRaw + BigInt(event.value);
+  toHolder.tokenBalance = formatUnits(toHolder.tokenBalanceRaw, DECIMALS);
+  toHolder.totalTokensHeldRaw = toHolder.totalTokensHeldRaw + BigInt(event.value);
+  toHolder.totalTokensHeld = formatUnits(toHolder.totalTokensHeldRaw, DECIMALS);
+
+  if (
+    BigInt(toHolder.tokenBalanceRaw) == BIGINT_ZERO &&
+    BigInt(toHolderPreviousBalance) > BIGINT_ZERO
+  ) {
+    governance.currentTokenHolders -= 1;
+    governanceUpdated = true;
+  } else if (
+    BigInt(toHolder.tokenBalanceRaw) > BIGINT_ZERO &&
+    BigInt(toHolderPreviousBalance) == BIGINT_ZERO
+  ) {
+    governance.currentTokenHolders += 1;
+    governanceUpdated = true;
+  }
+
+  await toHolder.save();
+
+  if (governanceUpdated) await governance.save();
 };

@@ -1,4 +1,5 @@
 import { validateAndParseAddress } from 'starknet';
+import { TokenHolder, Delegate, Governance } from '../.checkpoint/models';
 
 export const DECIMALS = 18;
 
@@ -11,6 +12,18 @@ export async function getEntity(entity, id) {
 
   if (!item) {
     item = new entity(id);
+  }
+
+  if (entity === TokenHolder && id != ZERO_ADDRESS) {
+    const governance = await getEntity(Governance, 'GOVERNANCE');
+    governance.totalTokenHolders += 1;
+    await governance.save();
+  }
+
+  if (entity === Delegate && id != ZERO_ADDRESS) {
+    const governance = await getEntity(Governance, 'GOVERNANCE');
+    governance.totalDelegates += 1;
+    await governance.save();
   }
 
   return item;

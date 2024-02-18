@@ -90,7 +90,9 @@ export const handleTransfer: CheckpointWriter = async ({ event }) => {
   const toHolderPreviousBalance = toHolder.tokenBalanceRaw;
   toHolder.tokenBalanceRaw = (BigInt(toHolder.tokenBalanceRaw) + BigInt(event.value)).toString();
   toHolder.tokenBalance = formatUnits(toHolder.tokenBalanceRaw, DECIMALS);
-  toHolder.totalTokensHeldRaw = (BigInt(toHolder.totalTokensHeldRaw) + BigInt(event.value)).toString();
+  toHolder.totalTokensHeldRaw = (
+    BigInt(toHolder.totalTokensHeldRaw) + BigInt(event.value)
+  ).toString();
   toHolder.totalTokensHeld = formatUnits(toHolder.totalTokensHeldRaw, DECIMALS);
 
   if (

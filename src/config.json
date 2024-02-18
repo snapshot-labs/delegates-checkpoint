@@ -1,5 +1,5 @@
 {
-  "network_node_url": "https://starknet-sepolia.infura.io/v3/46a5dd9727bf48d4a132672d3f376146",
+  "network_node_url": "https://starknet-mainnet.infura.io/v3/46a5dd9727bf48d4a132672d3f376146",
   "optimistic_indexing": true,
   "decimal_types": {
     "BigIntVP": {
@@ -13,8 +13,8 @@
   },
   "sources": [
     {
-      "contract": "0x035c332b8de00874e702b4831c84b22281fb3246f714475496d74e644f35d492",
-      "start": 28540,
+      "contract": "0x0782f0ddca11d9950bc3220e35ac82cf868778edb67a5e58b39838544bc4cd0f",
+      "start": 536311,
       "abi": "Token",
       "events": [
         {

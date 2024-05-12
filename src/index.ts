@@ -57,7 +57,10 @@ async function run() {
   }
 
   await checkpoint.reset();
-  checkpoint.start();
+  await checkpoint.resetMetadata();
+  console.log('Checkpoint ready');
+
+  await checkpoint.start();
 }
 
 run();

@@ -30,6 +30,25 @@
           "fn": "handleTransfer"
         }
       ]
+    },
+    {
+      "contract": "0x00c530f2c0aa4c16a0806365b0898499fba372e5df7a7172dc6fe9ba777e8007",
+      "start": 644053,
+      "abi": "Token",
+      "events": [
+        {
+          "name": "DelegateChanged",
+          "fn": "handleDelegateChanged"
+        },
+        {
+          "name": "DelegateVotesChanged",
+          "fn": "handleDelegateVotesChanged"
+        },
+        {
+          "name": "Transfer",
+          "fn": "handleTransfer"
+        }
+      ]
     }
   ]
 }

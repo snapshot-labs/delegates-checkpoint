@@ -1,21 +1,22 @@
 import { validateAndParseAddress } from 'starknet';
-import { CheckpointWriter } from '@snapshot-labs/checkpoint';
+import { starknet } from '@snapshot-labs/checkpoint';
 import { formatUnits } from '@ethersproject/units';
 import { TokenHolder, Delegate, Governance } from '../.checkpoint/models';
 import { BIGINT_ZERO, DECIMALS, ZERO_ADDRESS, getEntity } from './utils';
 
-export const handleDelegateChanged: CheckpointWriter = async ({ event }) => {
+export const handleDelegateChanged: starknet.Writer = async ({ event, source }) => {
   if (!event) return;
 
   console.log('Handle delegate changed', event);
 
+  const governanceId = source?.contract || '';
   const delegator = validateAndParseAddress(event.delegator);
   const fromDelegate = validateAndParseAddress(event.from_delegate);
   const toDelegate = validateAndParseAddress(event.to_delegate);
 
-  const tokenHolder: TokenHolder = await getEntity(TokenHolder, delegator);
-  const previousDelegate: Delegate = await getEntity(Delegate, fromDelegate);
-  const newDelegate: Delegate = await getEntity(Delegate, toDelegate);
+  const tokenHolder: TokenHolder = await getEntity(TokenHolder, delegator, governanceId);
+  const previousDelegate: Delegate = await getEntity(Delegate, fromDelegate, governanceId);
+  const newDelegate: Delegate = await getEntity(Delegate, toDelegate, governanceId);
 
   tokenHolder.delegate = toDelegate;
   await tokenHolder.save();
@@ -27,13 +28,18 @@ export const handleDelegateChanged: CheckpointWriter = async ({ event }) => {
   await newDelegate.save();
 };
 
-export const handleDelegateVotesChanged: CheckpointWriter = async ({ event }) => {
+export const handleDelegateVotesChanged: starknet.Writer = async ({ event, source }) => {
   if (!event) return;
 
   console.log('Handle delegate votes changed', event);
 
-  const governance: Governance = await getEntity(Governance, 'GOVERNANCE');
-  const delegate: Delegate = await getEntity(Delegate, validateAndParseAddress(event.delegate));
+  const governanceId = source?.contract || '';
+  const governance: Governance = await getEntity(Governance, governanceId);
+  const delegate: Delegate = await getEntity(
+    Delegate,
+    validateAndParseAddress(event.delegate),
+    governanceId
+  );
 
   delegate.delegatedVotesRaw = BigInt(event.new_votes).toString();
   delegate.delegatedVotes = formatUnits(event.new_votes, DECIMALS);
@@ -50,7 +56,7 @@ export const handleDelegateVotesChanged: CheckpointWriter = async ({ event }) =>
   await governance.save();
 };
 
-export const handleTransfer: CheckpointWriter = async ({ event }) => {
+export const handleTransfer: starknet.Writer = async ({ event, source }) => {
   if (!event) return;
 
   console.log('Handle transfer', event);
@@ -59,9 +65,10 @@ export const handleTransfer: CheckpointWriter = async ({ event }) => {
   const from = validateAndParseAddress(event.from);
   const to = validateAndParseAddress(event.to);
 
-  const fromHolder: TokenHolder = await getEntity(TokenHolder, from);
-  const toHolder: TokenHolder = await getEntity(TokenHolder, to);
-  const governance: Governance = await getEntity(Governance, 'GOVERNANCE');
+  const governanceId = source?.contract || '';
+  const fromHolder: TokenHolder = await getEntity(TokenHolder, from, governanceId);
+  const toHolder: TokenHolder = await getEntity(TokenHolder, to, governanceId);
+  const governance: Governance = await getEntity(Governance, governanceId);
 
   if (from != ZERO_ADDRESS) {
     const fromHolderPreviousBalance = fromHolder.tokenBalanceRaw;

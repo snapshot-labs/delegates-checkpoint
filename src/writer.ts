@@ -62,13 +62,16 @@ export const handleTransfer: starknet.Writer = async ({ event, source }) => {
   console.log('Handle transfer', event);
 
   let governanceUpdated = false;
+  let fromHolderUpdated = false;
   const from = validateAndParseAddress(event.from);
   const to = validateAndParseAddress(event.to);
 
   const governanceId = source?.contract || '';
-  const fromHolder: TokenHolder = await getEntity(TokenHolder, from, governanceId);
-  const toHolder: TokenHolder = await getEntity(TokenHolder, to, governanceId);
-  const governance: Governance = await getEntity(Governance, governanceId);
+  const [fromHolder, toHolder, governance] = await Promise.all([
+    getEntity(TokenHolder, from, governanceId),
+    getEntity(TokenHolder, to, governanceId),
+    getEntity(Governance, governanceId)
+  ]);
 
   if (from != ZERO_ADDRESS) {
     const fromHolderPreviousBalance = fromHolder.tokenBalanceRaw;
@@ -91,7 +94,7 @@ export const handleTransfer: starknet.Writer = async ({ event, source }) => {
       governanceUpdated = true;
     }
 
-    await fromHolder.save();
+    fromHolderUpdated = true;
   }
 
   const toHolderPreviousBalance = toHolder.tokenBalanceRaw;
@@ -116,7 +119,9 @@ export const handleTransfer: starknet.Writer = async ({ event, source }) => {
     governanceUpdated = true;
   }
 
-  await toHolder.save();
-
-  if (governanceUpdated) await governance.save();
+  await Promise.all([
+    toHolder.save(),
+    fromHolderUpdated ? fromHolder.save() : undefined,
+    governanceUpdated ? governance.save() : undefined
+  ])
 };

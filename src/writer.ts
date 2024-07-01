@@ -14,11 +14,10 @@ export const handleDelegateChanged: starknet.Writer = async ({ event, source }) 
   const toDelegate = validateAndParseAddress(event.to_delegate);
 
   const previousDelegate: Delegate = await getDelegate(fromDelegate, governanceId);
-  const newDelegate: Delegate = await getDelegate(toDelegate, governanceId);
-
   previousDelegate.tokenHoldersRepresentedAmount -= 1;
   await previousDelegate.save();
 
+  const newDelegate: Delegate = await getDelegate(toDelegate, governanceId);
   newDelegate.tokenHoldersRepresentedAmount += 1;
   await newDelegate.save();
 };

@@ -1,8 +1,8 @@
 import { validateAndParseAddress } from 'starknet';
 import { starknet } from '@snapshot-labs/checkpoint';
 import { formatUnits } from '@ethersproject/units';
-import { TokenHolder, Delegate, Governance } from '../.checkpoint/models';
-import { BIGINT_ZERO, DECIMALS, getEntity } from './utils';
+import { Delegate, Governance } from '../.checkpoint/models';
+import { BIGINT_ZERO, DECIMALS, getGovernance, getDelegate } from './utils';
 
 export const handleDelegateChanged: starknet.Writer = async ({ event, source }) => {
   if (!event) return;
@@ -10,16 +10,11 @@ export const handleDelegateChanged: starknet.Writer = async ({ event, source }) 
   console.log('Handle delegate changed', event);
 
   const governanceId = source?.contract || '';
-  const delegator = validateAndParseAddress(event.delegator);
   const fromDelegate = validateAndParseAddress(event.from_delegate);
   const toDelegate = validateAndParseAddress(event.to_delegate);
 
-  const tokenHolder: TokenHolder = await getEntity(TokenHolder, delegator, governanceId);
-  const previousDelegate: Delegate = await getEntity(Delegate, fromDelegate, governanceId);
-  const newDelegate: Delegate = await getEntity(Delegate, toDelegate, governanceId);
-
-  tokenHolder.delegate = toDelegate;
-  await tokenHolder.save();
+  const previousDelegate: Delegate = await getDelegate(fromDelegate, governanceId);
+  const newDelegate: Delegate = await getDelegate(toDelegate, governanceId);
 
   previousDelegate.tokenHoldersRepresentedAmount -= 1;
   await previousDelegate.save();
@@ -34,9 +29,8 @@ export const handleDelegateVotesChanged: starknet.Writer = async ({ event, sourc
   console.log('Handle delegate votes changed', event);
 
   const governanceId = source?.contract || '';
-  const governance: Governance = await getEntity(Governance, governanceId);
-  const delegate: Delegate = await getEntity(
-    Delegate,
+  const governance: Governance = await getGovernance(governanceId);
+  const delegate: Delegate = await getDelegate(
     validateAndParseAddress(event.delegate),
     governanceId
   );
@@ -53,5 +47,6 @@ export const handleDelegateVotesChanged: starknet.Writer = async ({ event, sourc
   const votesDiff = BigInt(event.new_votes) - BigInt(event.previous_votes);
   governance.delegatedVotesRaw = (BigInt(governance.delegatedVotesRaw) + votesDiff).toString();
   governance.delegatedVotes = formatUnits(governance.delegatedVotesRaw, DECIMALS);
+
   await governance.save();
 };

@@ -5,23 +5,10 @@ scalar BigDecimalVP
 
 type Governance {
   id: String!
-  currentTokenHolders: Int!
   currentDelegates: Int!
-  totalTokenHolders: Int!
   totalDelegates: Int!
   delegatedVotesRaw: BigIntVP!
   delegatedVotes: BigDecimalVP!
-}
-
-type TokenHolder {
-  id: String!
-  governance: Governance
-  user: String!
-  delegate: Delegate
-  tokenBalanceRaw: BigIntVP!
-  tokenBalance: BigDecimalVP!
-  totalTokensHeldRaw: BigIntVP!
-  totalTokensHeld: BigDecimalVP!
 }
 
 type Delegate {
@@ -31,5 +18,4 @@ type Delegate {
   delegatedVotesRaw: BigIntVP!
   delegatedVotes: BigDecimalVP!
   tokenHoldersRepresentedAmount: Int!
-  tokenHoldersRepresented: [TokenHolder]! @derivedFrom(field: "delegate")
 }

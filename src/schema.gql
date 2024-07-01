@@ -6,7 +6,6 @@ scalar BigDecimalVP
 type Governance {
   id: String!
   currentDelegates: Int!
-  totalDelegates: Int!
   delegatedVotesRaw: BigIntVP!
   delegatedVotes: BigDecimalVP!
 }

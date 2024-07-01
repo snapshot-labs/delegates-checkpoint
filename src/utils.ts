@@ -21,6 +21,8 @@ export async function getGovernance(id: string): Promise<Governance> {
 
   if (!governance) {
     governance = new Governance(id);
+    governance.currentDelegates = 0;
+    governance.totalDelegates = 0;
   }
 
   return governance;

@@ -8,6 +8,7 @@ import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin
 import * as writer from './writer';
 import config from './config.json';
 import Token from './abis/Token.json';
+import Token2 from './abis/Token2.json';
 
 const dir = __dirname.endsWith('dist/src') ? '../' : '';
 const schemaFile = path.join(__dirname, `${dir}../src/schema.gql`);
@@ -27,7 +28,7 @@ const checkpoint = new Checkpoint(config, indexer, schema, {
   logLevel: LogLevel.Info,
   resetOnConfigChange: true,
   prettifyLogs: process.env.NODE_ENV !== 'production',
-  abis: { Token }
+  abis: { Token, Token2 }
 });
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -57,8 +58,8 @@ async function run() {
     await sleep(PRODUCTION_INDEXER_DELAY);
   }
 
-  // await checkpoint.reset();
-  // await checkpoint.resetMetadata();
+  await checkpoint.reset();
+  await checkpoint.resetMetadata();
   console.log('Checkpoint ready');
 
   await checkpoint.start();

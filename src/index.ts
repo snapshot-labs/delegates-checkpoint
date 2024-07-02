@@ -1,13 +1,14 @@
 import 'dotenv/config';
 import path from 'path';
 import fs from 'fs';
-import Checkpoint, { createGetLoader, LogLevel } from '@snapshot-labs/checkpoint';
+import Checkpoint, { starknet, createGetLoader, LogLevel } from '@snapshot-labs/checkpoint';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import * as writer from './writer';
 import config from './config.json';
 import Token from './abis/Token.json';
+import Token2 from './abis/Token2.json';
 
 const dir = __dirname.endsWith('dist/src') ? '../' : '';
 const schemaFile = path.join(__dirname, `${dir}../src/schema.gql`);
@@ -22,11 +23,12 @@ if (process.env.CA_CERT) {
 
 config.network_node_url = process.env.NETWORK_NODE_URL ?? config.network_node_url;
 
-const checkpoint = new Checkpoint(config, writer, schema, {
+const indexer = new starknet.StarknetIndexer(writer);
+const checkpoint = new Checkpoint(config, indexer, schema, {
   logLevel: LogLevel.Info,
   resetOnConfigChange: true,
   prettifyLogs: process.env.NODE_ENV !== 'production',
-  abis: { Token }
+  abis: { Token, Token2 }
 });
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -56,8 +58,8 @@ async function run() {
     await sleep(PRODUCTION_INDEXER_DELAY);
   }
 
-  await checkpoint.reset();
-  await checkpoint.resetMetadata();
+  // await checkpoint.reset();
+  // await checkpoint.resetMetadata();
   console.log('Checkpoint ready');
 
   await checkpoint.start();

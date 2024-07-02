@@ -1,5 +1,5 @@
 import { validateAndParseAddress } from 'starknet';
-import { TokenHolder, Delegate, Governance } from '../.checkpoint/models';
+import { Delegate, Governance } from '../.checkpoint/models';
 
 export const DECIMALS = 18;
 
@@ -7,24 +7,32 @@ export const BIGINT_ZERO = BigInt(0);
 
 export const ZERO_ADDRESS = validateAndParseAddress('0x0');
 
-export async function getEntity(entity, id) {
-  let item = await entity.loadEntity(id);
+export async function getDelegate(id: string, governanceId: string): Promise<Delegate> {
+  let delegate = await Delegate.loadEntity(`${governanceId}/${id}`);
 
-  if (!item) {
-    item = new entity(id);
+  if (!delegate) {
+    delegate = new Delegate(`${governanceId}/${id}`);
+    delegate.governance = governanceId;
+    delegate.user = id;
+
+    if (id != ZERO_ADDRESS) {
+      const governance = await getGovernance(governanceId);
+      governance.totalDelegates += 1;
+      await governance.save();
+    }
   }
 
-  if (entity === TokenHolder && id != ZERO_ADDRESS) {
-    const governance = await getEntity(Governance, 'GOVERNANCE');
-    governance.totalTokenHolders += 1;
-    await governance.save();
+  return delegate;
+}
+
+export async function getGovernance(id: string): Promise<Governance> {
+  let governance = await Governance.loadEntity(id);
+
+  if (!governance) {
+    governance = new Governance(id);
+    governance.currentDelegates = 0;
+    governance.totalDelegates = 0;
   }
 
-  if (entity === Delegate && id != ZERO_ADDRESS) {
-    const governance = await getEntity(Governance, 'GOVERNANCE');
-    governance.totalDelegates += 1;
-    await governance.save();
-  }
-
-  return item;
+  return governance;
 }

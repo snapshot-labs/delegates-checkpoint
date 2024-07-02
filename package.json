@@ -19,7 +19,7 @@
     "@ethersproject/address": "^5.6.1",
     "@ethersproject/bignumber": "^5.6.1",
     "@ethersproject/units": "^5.6.1",
-    "@snapshot-labs/checkpoint": "^0.1.0-beta.35",
+    "@snapshot-labs/checkpoint": "^0.1.0-beta.37",
     "@snapshot-labs/sx": "^0.1.0-beta.35",
     "@types/bn.js": "^5.1.0",
     "@types/mysql": "^2.15.21",
